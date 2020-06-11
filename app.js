@@ -3,7 +3,6 @@ const express = require("express");
 const path = require("path");
 const cookieParser = require("cookie-parser");
 const logger = require("morgan");
-
 const dotenv = require("dotenv");
 const {
   Client,
@@ -11,6 +10,7 @@ const {
   MessageAttachment,
   TextChannel,
 } = require("discord.js");
+const randomNumber = require("random-number");
 
 const axios = require("axios");
 
@@ -19,8 +19,14 @@ dotenv.config();
 const PREFIX = process.env.PREFIX || "$";
 const TOKEN = process.env.DISCORD_TOKEN;
 const BOT_CHANNEL_ID = process.env.BOT_CHANNEL_ID;
+const OPENWEATHER_TOKEN = process.env.OPENWEATHER_TOKEN;
 
 const client = new Client();
+
+const capitalize = (string) => {
+  if (typeof string !== "string") return "";
+  return string.charAt(0).toUpperCase() + string.slice(1);
+};
 
 client.on("ready", async () => {
   const botChannel = await client.channels.fetch(BOT_CHANNEL_ID);
@@ -37,7 +43,7 @@ client.on("ready", async () => {
     .setDescription(
       "Hello, folks! I am rossanodroid, rossanodan's Discord bot."
     )
-    .setFooter('https://rossanodroid.herokuapp.com/')
+    .setFooter("https://rossanodroid.herokuapp.com/")
     .setTimestamp();
   botChannel.send(isReadyMessage);
 });
@@ -58,6 +64,64 @@ client.on("message", async (message) => {
         m.createdTimestamp - message.createdTimestamp
       }ms. API Latency is ${Math.round(client.ping)}ms`
     );
+  }
+
+  if (command === "lucky-number") {
+    const generator = randomNumber.generator({
+      min: 1,
+      max: 99,
+      integer: true,
+    });
+    const luckyNumber = generator();
+    message.channel.send(`Your lucky number is ${luckyNumber}`);
+  }
+
+  if (command === "weather") {
+    const location = args.join(" ");
+    if (location === undefined) {
+      const errorMessage = new MessageEmbed()
+        .setColor("#ff0000")
+        .setTitle("Error")
+        .setDescription("Enter a location. For example $weather London");
+      message.channel.send(errorMessage);
+    } else {
+      axios
+        .get(
+          `http://api.openweathermap.org/data/2.5/weather?q=${location.toLowerCase()}&appid=${OPENWEATHER_TOKEN}`
+        )
+        .then((response) => {
+          let emoji;
+          const keys = Object.keys(response.data);
+
+          if (keys.includes("rain")) {
+            emoji = message.channel.guild.emojis.cache.find(
+              (emoji) => emoji.id === "720591033179832392"
+            );
+          }
+
+          const city = response.data.name;
+          const fields = response.data.weather.map((field) => ({
+            name: field.main,
+            value: capitalize(field.description),
+          }));
+
+          const weather = emoji
+            ? new MessageEmbed()
+                .setColor("#0099ff")
+                .setTitle(`Weather in ${city} today`)
+                .addFields(fields)
+                .setDescription(emoji)
+            : new MessageEmbed()
+                .setColor("#0099ff")
+                .setTitle(`Weather in ${city} today`)
+                .addFields(fields);
+
+          message.channel.send(weather);
+        })
+        .catch((error) => {
+          message.channel.send(`Ops.. ${error.message}.`);
+        });
+    }
   }
 
   if (command === "rules") {
