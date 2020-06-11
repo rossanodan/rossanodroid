@@ -57,6 +57,22 @@ client.on("message", async (message) => {
   const args = message.content.slice(PREFIX.length).trim().split(/ +/g);
   const command = args.shift().toLowerCase();
 
+  if (command === "analyze") {
+    const attachments = message.attachments;
+
+    const fields = attachments.map((attachment) => ({
+      name: attachment.name,
+      value: attachment.url,
+    }));
+
+    const analyzed = new MessageEmbed()
+      .setColor("#0099ff")
+      .setTitle(`${attachments.size} attachment`)
+      .addFields(fields);
+
+    message.channel.send(analyzed);
+  }
+
   if (command === "ping") {
     const m = await message.channel.send("Ping?");
     m.edit(
