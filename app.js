@@ -26,7 +26,6 @@ client.on("ready", async () => {
   const botChannel = await client.channels.fetch(BOT_CHANNEL_ID);
 
   if (client.user) {
-    client.user.setActivity(`on ${client.guilds.size} servers`);
     client.user.setPresence({
       status: "online",
     });
@@ -38,6 +37,7 @@ client.on("ready", async () => {
     .setDescription(
       "Hello, folks! I am rossanodroid, rossanodan's Discord bot."
     )
+    .setFooter('https://rossanodroid.herokuapp.com/')
     .setTimestamp();
   botChannel.send(isReadyMessage);
 });
