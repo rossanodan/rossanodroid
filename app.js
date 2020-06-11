@@ -20,6 +20,7 @@ const PREFIX = process.env.PREFIX || "$";
 const TOKEN = process.env.DISCORD_TOKEN;
 const BOT_CHANNEL_ID = process.env.BOT_CHANNEL_ID;
 const OPENWEATHER_TOKEN = process.env.OPENWEATHER_TOKEN;
+const THEMOVIEDB_TOKEN = process.env.THEMOVIEDB_TOKEN;
 
 const client = new Client();
 
@@ -56,6 +57,41 @@ client.on("message", async (message) => {
 
   const args = message.content.slice(PREFIX.length).trim().split(/ +/g);
   const command = args.shift().toLowerCase();
+
+  if (command === "search-movie") {
+    const query = args.join("%20");
+
+    if (query === undefined) {
+      const errorMessage = new MessageEmbed()
+        .setColor("#ff0000")
+        .setTitle("Error")
+        .setDescription("Enter a title. For example $movie The Avengers");
+      message.channel.send(errorMessage);
+    } else {
+      axios
+        .get(
+          `https://api.themoviedb.org/3/search/movie?api_key=${THEMOVIEDB_TOKEN}&query=${query}&include_adult=false`
+        )
+        .then((response) => {
+          response.data.results.forEach((movie) => {
+            const messageEmbed = new MessageEmbed()
+              .setColor("#0099ff")
+              .setTitle(movie.original_title || "Title not available")
+              .setDescription(movie.overview || "Overview not available")
+              .addFields({
+                name: "Vote average",
+                value: movie.vote_average,
+              })
+              .setImage(`https://image.tmdb.org/t/p/w500${movie.poster_path}`)
+              .setFooter(`Release date ${movie.release_date}`);
+            message.channel.send(messageEmbed);
+          });
+        })
+        .catch((error) => {
+          message.channel.send(`Ops.. ${error.message}.`);
+        });
+    }
+  }
 
   if (command === "analyze") {
     const attachments = message.attachments;
