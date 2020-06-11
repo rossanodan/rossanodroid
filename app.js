@@ -18,29 +18,12 @@ dotenv.config();
 
 const PREFIX = process.env.PREFIX || "$";
 const TOKEN = process.env.DISCORD_TOKEN;
+const BOT_CHANNEL_ID = process.env.BOT_CHANNEL_ID;
 
 const client = new Client();
 
-const notifyGeneralChannel = (channel) => {
-  const generalChannel = channel.client.channels.cache.find(
-    (currentChannel) =>
-      currentChannel.id === "719574483467370550" ||
-      (currentChannel instanceof TextChannel &&
-        currentChannel.name === "general")
-  );
-  if (!generalChannel)
-    return console.error(
-      `general channel not found. Make sure to setup GENERAL_CHANNEL_ID env variable.`
-    );
-
-  if (generalChannel instanceof TextChannel) {
-    const message = `\:tada: A new channel was created! Check out the channel ${channel.toString()}`;
-    generalChannel.send(message);
-  }
-};
-
-client.once("ready", async () => {
-  const botChannel = await client.channels.fetch("719601625739558944");
+client.on("ready", async () => {
+  const botChannel = await client.channels.fetch(BOT_CHANNEL_ID);
 
   if (client.user) {
     client.user.setActivity(`on ${client.guilds.size} servers`);
@@ -160,7 +143,6 @@ client.on("message", async (message) => {
       .setTitle("Status")
       .setDescription(`Hey, I'm great! Thanks for asking ${whiteCheckMark}`);
     message.channel.send(status);
-    // :white_check_mark:
   }
 
   if (command === "meme") {
@@ -184,8 +166,6 @@ client.on("message", async (message) => {
       });
   }
 });
-
-client.on("channelCreate", notifyGeneralChannel);
 
 const indexRouter = require("./routes/index");
 
