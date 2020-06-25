@@ -8,19 +8,12 @@ dotenv.config();
 
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN || "";
 
-if (!DISCORD_TOKEN || DISCORD_TOKEN === "") {
-  Logger.log({
-    level: "error",
-    message: "Discord token not provided. Cannot create the bot.",
-  });
-}
-
-const client: Discord.Client = new Discord.Client();
+const client = new Discord.Client();
 
 client.on("ready", () => {
   Logger.log({
     level: "info",
-    message: "Online, let's get started!",
+    message: "Bot is online.",
   });
 
   if (client.user) {
@@ -35,9 +28,29 @@ client.on("ready", () => {
 });
 
 client.on("message", (message: Discord.Message) => {
-  if (message.content === "ping") {
-    message.reply("Pong!");
-  }
+  if (
+    !message.content.startsWith(configuration.COMMAND_PREFIX) ||
+    message.author.bot
+  )
+    return;
+
+  const args = message.content
+    .slice(configuration.COMMAND_PREFIX.length)
+    .split(" ");
+  const command = args.shift()?.toLowerCase();
+
+  Logger.log({
+    level: "info",
+    message: `${message.author.username} sent a message with command ${configuration.COMMAND_PREFIX}${command}.`,
+  });
 });
 
 client.login(DISCORD_TOKEN);
+
+// APIs Error handling
+process.on("unhandledRejection", (error: Error) => {
+  Logger.log({
+    level: "error",
+    message: error.message || "",
+  });
+});
